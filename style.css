@@ -10,22 +10,26 @@ body{
     height: 120vh;
 }
 
+line {
+    stroke: black;
+    stroke-width: 2;
+}
+
 .info_data{
     color: white;
 }
 
 #editor_bar{
     border: 1px solid white;
-    position: fixed;
-    left: 40vw;
-    bottom:10vh;
-    height: 5vh;
+    margin: 0 auto;
+    width: 16vw;
     display: flex;
-    flex-direction: row;
+    gap: 1vw;
+    flex-direction: column;
     z-index: 3;
 }
 
-img{
+image{
     -khtml-user-select: none;
     -o-user-select: none;
     -moz-user-select: none;
@@ -36,8 +40,6 @@ img{
 #info_wrapper{
     background-color: #18191a;
     z-index: 3;
-    position: fixed;
-    left: 2vw;
 }
 
 #mapwidth_input{

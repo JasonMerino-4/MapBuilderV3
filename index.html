@@ -13,15 +13,10 @@
 
 <body>
     <main>
-        <div id="info_wrapper">
-            <p id="imgdimension_info" class="info_data">|Img Dimensions|</p>
-            <p id="pincoord_info" class="info_data">|Pin Coords|</p>
-            <p id="pintype_info" class="info_data">|Pin Type|</p>
-            <p id="pinname_info" class="info_data">|Pin Name|</p>
-        </div>
         <div id="editor_bar">
-            <input id="mapwidth_input" 4type="number" placeholder="map width">
-            <input id="pinname_input" 4type="text" placeholder="pin name">
+            <input id="mapwidth_input" type="number" placeholder="map width">
+            <input id="pinfloor_input" type="number" placeholder="floor">
+            <input id="pinname_input" type="text" placeholder="pin name">
             <select name="pin types" id="pintype_input">
                 <option value="Classroom" selected>Classroom</option>
                 <option value="Bathroom">Bathroom</option>
@@ -29,13 +24,22 @@
                 <option value="Entrance">Entrance</option>
                 <option value="Stairs">Stairs</option>
                 <option value="Elevators">Elevators</option>
+                <option value="Path">Path</option>
             </select>
             <button id="newpin_button">
                 +
             </button>
+            <div id="info_wrapper">
+                <p id="imgdimension_info" class="info_data">|Img Dimensions|</p>
+                <p id="pincoord_info" class="info_data">|Pin Coords|</p>
+                <p id="pintype_info" class="info_data">|Pin Type|</p>
+                <p id="pinname_info" class="info_data">|Pin Name|</p>
+            </div>
         </div>
         <div id="map_wrapper">
-            <img id="map" src="Floorplans/floor1.svg">
+            <svg id="map_paths">
+            </svg>
+            <img id="map_floorplan" src="Floorplans/floor1.svg">
         </div>
     </main>
 </body>
