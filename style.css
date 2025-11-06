@@ -6,8 +6,13 @@ body{
     background-image: linear-gradient(rgb(54, 54, 54) 1px, transparent 1px), linear-gradient(to right, rgb(54, 54, 54) 1px, transparent 1px);
     background-size: 100px 100px;
     background-color: #18191a;
-    width: 120vw;
-    height: 120vh;
+    width: 99vw;
+    height: 100vh;
+}
+
+main {
+    display: flex;
+    flex-direction: row;
 }
 
 line {
@@ -19,14 +24,19 @@ line {
     color: white;
 }
 
+#console {
+    width: 100%;
+    height: 20vh;
+}
+
 #editor_bar{
     border: 1px solid white;
-    margin: 0 auto;
-    width: 16vw;
+    width: 20vw;
     display: flex;
     gap: 1vw;
     flex-direction: column;
     z-index: 3;
+    background-color: whitesmoke;
 }
 
 image{
@@ -35,6 +45,22 @@ image{
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
+}
+
+#pin_wrapper{
+    display: flex;
+    flex-direction: column;
+    border: 2px solid white;
+    padding: 10px 4px;
+    gap: 1vh;
+}
+
+#edge_wrapper{
+    display: flex;
+    flex-direction: column;
+    border: 2px solid white;
+    padding: 10px 4px;
+    gap: 1vh;
 }
 
 #info_wrapper{

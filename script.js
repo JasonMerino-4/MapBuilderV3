@@ -1,10 +1,25 @@
 document.addEventListener("DOMContentLoaded", function () {
-    //HTML Input Elements
+    //HTML inputs
     let mapWidthInput = document.getElementById("mapwidth_input");
+
     let newPinButton = document.getElementById("newpin_button");
+    let deletePinButton = document.getElementById("deletepin_button");
     let pinNameInput = document.getElementById("pinname_input");
     let pinTypeInput = document.getElementById("pintype_input");
     let pinFloorInput = document.getElementById("pinfloor_input");
+
+
+    let edgeOnInput = document.getElementById("edge_on_input");
+    let selectingParentInput = document.getElementById("selecting_parent_input");
+    let edgeTrailInput = document.getElementById("edge_trail_input");
+    let currEdgesSelect = document.getElementById("current_edges_select");
+    let newEdgesSelect = document.getElementById("new_edges_select");
+    let deleteCurrEdgeButton = document.getElementById("delete_current_edge_button");
+    let addNewEdgeButton = document.getElementById("add_all_new_edge_button");
+    let deleteNewEdgeButton = document.getElementById("delete_new_edge_button");
+
+    let printButton = document.getElementById("print_button");
+
 
     //Map elements
     let mapWrapper = document.getElementById("map_wrapper");
@@ -17,6 +32,13 @@ document.addEventListener("DOMContentLoaded", function () {
     let pinTypeInfo = this.getElementById("pintype_info");
     let pinNameInfo = this.getElementById("pinname_info");
 
+    //Console
+    let consoleArea = this.getElementById("console");
+    let floorDataInput = this.getElementById("floordata_input");
+
+    //Edit Mode: pin_maker, edge_maker
+    let mode = "pin_placement"
+
 
     class pin {
         constructor(name, type, floor){
@@ -24,6 +46,15 @@ document.addEventListener("DOMContentLoaded", function () {
             this.pinType = type;
             this.pinFloor = floor
             this.pinElement = this.createPinHTMLElement();
+            this.pinNeighbors = new Set();
+        }
+
+        loadAttributes(name, type, floor, xPosition, yPosition){
+            this.pinName = name;
+            this.pinType = type;
+            this.pinFloor = floor
+            this.pinElement = this.createPinHTMLElement(xPosition, yPosition);
+            this.pinNeighbors = new Set();
         }
 
         createPinHTMLElement() {
@@ -32,8 +63,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
             //Adds an event listener that returns a reference to the whole pin object.
             newPinElement.addEventListener("click", () => {
-                pinManagment.focusedPin = this;
-                updateInfoSquare();
+                pinManagment.prevFocusedPin = pinManagment.focusedPin;
+
+                if (edgeOnInput.checked == false){ //Node Editing Mode
+                    pinManagment.focusedPin = this;
+                    updateInfoSquare();
+                } else { //Edge Editing Mode
+                    if (selectingParentInput.checked){
+                        pinManagment.focusedPin = this;
+                        updateInfoSquare();
+                        loadCurrentpinNeighbors();
+                    } else {
+                        addToNewEdges(this);
+                    }
+                }
+            });
+    
+            return newPinElement;
+        }
+
+        createPinHTMLElement(xPosition, yPosition) {
+            let newPinElement = document.createElement("div");
+            newPinElement.classList.add("pin");
+            newPinElement.style.left = xPosition;
+            newPinElement.style.top = yPosition;
+
+            //Adds an event listener that returns a reference to the whole pin object.
+            newPinElement.addEventListener("click", () => {
+                pinManagment.prevFocusedPin = pinManagment.focusedPin;
+
+                if (edgeOnInput.checked == false){ //Node Editing Mode
+                    pinManagment.focusedPin = this;
+                    updateInfoSquare();
+                } else { //Edge Editing Mode
+                    if (selectingParentInput.checked){
+                        pinManagment.focusedPin = this;
+                        updateInfoSquare();
+                        loadCurrentpinNeighbors();
+                    } else {
+                        addToNewEdges(this);
+                    }
+                }
             });
     
             return newPinElement;
@@ -47,21 +117,43 @@ document.addEventListener("DOMContentLoaded", function () {
             return parseInt(this.pinElement.style.left) || 0;
         }
 
-        toString() {
-            return `${this.pinName},${this.pinType},${this.getIntXPosition()},${this.getIntYPosition()}`;
+        pinToJSON() {
+            let temp = {
+                name: this.pinName,
+                type: this.pinType,
+                floor: this.pinFloor,
+                xPosition: this.pinElement.style.left,
+                yPosition: this.pinElement.style.top,
+                edges: Array.from(this.pinNeighbors)
+            }
+
+            return JSON.stringify(temp);
         }
     }
 
     const pinManagment = {
         pinMap: new Map(),
         focusedPin: null,
-        numPathPins: 0,
+        prevFocusedPin: null,
+        numPathPins: 11000,
 
-        removePin: function (pinName) {
-            if (this.pinMap.has(pinName)){
-                document.removeChild(this.pinMap.get(pinName));
-                this.pinMap.delete(pinName);
+        clearMap: function(){
+            this.pinMap.forEach((pinObj, name) => {
+                this.removePin(pinObj);
+            })
+        },
+
+        removePin: function (pin) {
+            if (pin == null){
+                return;
             }
+
+            pin.pinNeighbors.forEach((otherPin) => {
+                this.removeEdge(pin, pinManagment.pinMap.get(otherPin));
+            });
+
+            mapWrapper.removeChild(pin.pinElement);
+            this.pinMap.delete(pin.pinName);
         },
 
         addPin: function (pinName, pinType, pinFloor){
@@ -85,6 +177,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
             mapWrapper.appendChild(newPin.pinElement);
             this.pinMap.set(pinName, newPin);
+            this.prevFocusedPin = this.focusedPin;
+            this.focusedPin = newPin;
+            return true;
+        },
+
+        setMaxPathID: function (pin) {
+            let max = 10999;
+
+            this.pinMap.forEach((pinObj, name) => {
+                if (pinObj.pinType == "Path"){
+                    if (parseInt(name) > max){
+                        max = parseInt(name);
+                    }
+                }
+
+            })
+
+            this.numPathPins = max + 1;
+        },
+
+        //for loading from json file
+        addPin: function (name, type, floor, xPosition, yPosition){
+            if (name == null || name == ""){
+                return false;
+            }
+
+            if (type == null || type == ""){
+                return false;
+            }
+
+            if (floor == null || floor == ""){
+                return false;
+            }
+
+            if (this.pinMap.has(name)){
+                return false;
+            }
+
+            let newPin = new pin(name, type, floor);
+            newPin.loadAttributes(name, type, floor, xPosition, yPosition);
+
+            mapWrapper.appendChild(newPin.pinElement);
+            this.pinMap.set(name, newPin);
             this.focusedPin = newPin;
             return true;
         },
@@ -98,19 +233,73 @@ document.addEventListener("DOMContentLoaded", function () {
                 return false;
             }
 
-            let newPin = new pin(this.numPathPins, pinType, pinFloor);
+            let newPin = new pin(this.numPathPins.toString(), pinType, pinFloor);
 
             mapWrapper.appendChild(newPin.pinElement);
-            this.pinMap.set(this.numPathPins, newPin);
+            this.pinMap.set(this.numPathPins.toString(), newPin);
+            this.prevFocusedPin = this.focusedPin;
             this.focusedPin = newPin;
             this.numPathPins++;
+
             return true;
+        },
+
+        addEdge: function (pin1, pin2){
+            if (pin1 != null && pin2 != null){
+                pin1.pinNeighbors.add(pin2.pinName);
+                pin2.pinNeighbors.add(pin1.pinName);
+            }
+        },
+
+        removeEdge: function (pin1, pin2){
+            if (pin1 != null && pin2 != null){
+                pin1.pinNeighbors.delete(pin2.pinName);
+                pin2.pinNeighbors.delete(pin1.pinName);
+            }
+        },
+
+        //For loading Edges from JSON
+        addEdges: function (name, neighbors){
+            if (name != null && neighbors != null){
+                let pinObj = this.pinMap.get(name);
+
+                neighbors.forEach((name) => {
+                    pinObj.pinNeighbors.add(name);
+                })
+            }
+        },
+
+        //only need x ratio for this to work
+        scalePins: function(oldImageX, newImageX){
+            let ratio = newImageX/oldImageX;
+            
+            this.pinMap.forEach((pinObj, name) => {
+                console.log(ratio);
+                pinObj.pinElement.style.width = (parseInt(pinObj.pinElement.style.width) * ratio) + "px";
+                pinObj.pinElement.style.height = (parseInt(pinObj.pinElement.style.height) * ratio) + "px";
+                pinObj.pinElement.style.top = (parseInt(pinObj.pinElement.style.top) * ratio) + "px";
+                pinObj.pinElement.style.left = (parseInt(pinObj.pinElement.style.left) * ratio) + "px";
+            });
+
+            drawPaths();
+        },
+
+        printJSON: function(){
+            consoleArea.value += "[";
+            this.pinMap.forEach((pinObj, name) => {
+                consoleArea.value += pinObj.pinToJSON() + ",";
+            })
+            consoleArea.value += "]";
         }
     };
 
     //Creates event for pin placement.
     mapWrapper.addEventListener("click", function(e){
         if (e.target != mapPathsSVG){
+            return;
+        }
+
+        if (edgeOnInput.checked){
             return;
         }
 
@@ -139,8 +328,6 @@ document.addEventListener("DOMContentLoaded", function () {
     function addLine(pin1, pin2){
         let newLine = document.createElementNS("http://www.w3.org/2000/svg", "line")
 
-        mapPathsSVG.to
-
         newLine.setAttribute("x1", pin1.getIntXPosition());
         newLine.setAttribute("y1", pin1.getIntYPosition());
         newLine.setAttribute("x2", pin2.getIntXPosition());
@@ -153,23 +340,112 @@ document.addEventListener("DOMContentLoaded", function () {
     function clearMapPaths(){
         while (mapPathsSVG.firstChild != null){
             mapPathsSVG.removeChild(mapPathsSVG.lastChild);
-            console.log("removed");
         }
     }
 
     function drawPaths(){
         clearMapPaths();
 
-        pinManagment.pinMap.forEach((value, key) => {
-            pinManagment.pinMap.forEach((value2, key2) => {
-                if (value != value2){
-                    addLine(value, value2);
-                }
-            }) 
+        pinManagment.pinMap.forEach((pin, name) => {
+            pin.pinNeighbors.forEach((otherPinName) => {
+                addLine(pin, pinManagment.pinMap.get(otherPinName));
+            })
         });
 
-        console.log(mapPathsSVG.children);
     }
+
+    function createPinOption(pinName){
+        let pinOption = document.createElement("option");
+        
+        pinOption.textContent = pinName;
+        pinOption.setAttribute("value", pinName);
+
+        return pinOption;
+    }
+
+    function addToNewEdges(pin){
+        if (edgeOnInput.checked == false){
+            return;
+        }
+
+        let pinOption = createPinOption(pin.pinName);
+        newEdgesSelect.appendChild(pinOption);
+    }
+
+    function loadCurrentpinNeighbors(){
+        if (edgeOnInput.checked == false){
+            return;
+        }
+
+        if (pinManagment.focusedPin == null){
+            return;
+        }
+
+        while (newEdgesSelect.firstChild != null){
+            newEdgesSelect.removeChild(newEdgesSelect.lastChild);
+        }
+
+        while (currEdgesSelect.firstChild != null){
+            currEdgesSelect.removeChild(currEdgesSelect.lastChild);
+        }
+
+        let pin = pinManagment.focusedPin;
+
+        pin.pinNeighbors.forEach((otherPin) => {
+            let pinOption = createPinOption(otherPin);
+            currEdgesSelect.appendChild(pinOption)
+        });;
+    }
+
+    async function fetchData(url) {
+        fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+                pinManagment.clearMap();
+
+                data.forEach((pinObj) => {
+                    pinManagment.addPin(pinObj.name, pinObj.type, pinObj.floor, pinObj.xPosition, pinObj.yPosition);
+                })
+
+                pinManagment.setMaxPathID();
+
+                data.forEach((pinObj) => {
+                    pinManagment.addEdges(pinObj.name, pinObj.edges);
+                })
+
+                drawPaths();
+            })
+            .catch((error) => console.error("Error loading JSON file", error));
+    }
+
+    deleteCurrEdgeButton.addEventListener("click", function(e){
+        if (currEdgesSelect.value == ''){
+            return;
+        }
+
+        let pin1 = pinManagment.focusedPin;
+        let pin2 = pinManagment.pinMap.get(currEdgesSelect.value);
+
+        pinManagment.removeEdge(pin1, pin2);
+        loadCurrentpinNeighbors();
+        drawPaths();
+    })
+
+    addNewEdgeButton.addEventListener("click", function(e){
+        let options = newEdgesSelect.children;
+
+        for (let i = 0; i < options.length; i++){
+            pinManagment.addEdge(pinManagment.focusedPin, pinManagment.pinMap.get(options[i].value));
+        }
+
+        drawPaths();
+        loadCurrentpinNeighbors();
+    })
+
+    printButton.addEventListener("click", function(e){
+        pinManagment.printJSON();
+    })
+    
 
     //Creates a new pin if non existent or focuses pin if it already exists.
     newPinButton.addEventListener("click", function(e){
@@ -185,14 +461,43 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        drawPaths();
+        if (edgeTrailInput.checked){
+            pinManagment.addEdge(pinManagment.focusedPin, pinManagment.prevFocusedPin);
+        }
+
         updateInfoSquare();
+    })
+
+    deletePinButton.addEventListener("click", function(e){
+        let toDelete = pinManagment.focusedPin;
+
+        if (toDelete == null){
+            return;
+        }
+
+        pinManagment.removePin(pinManagment.focusedPin);
+        drawPaths();
+        pinManagment.focusedPin = null;
     })
 
     mapWidthInput.addEventListener("keyup", function(e){
         if (e.key == "Enter"){
-            mapWrapper.style.width = mapWidthInput.value + "px";
+            pinManagment.scalePins(parseInt(mapImage.style.width), parseInt(mapWidthInput.value));
+            mapImage.style.width = mapWidthInput.value + "px";
+            mapPathsSVG.style.width = mapWidthInput.value + "px";
+            mapPathsSVG.style.height = mapImage.offsetHeight + "px";
             imgDimensionInfo.textContent = `|Img Dimensions| x:  ${mapWrapper.clientWidth}, y:  ${mapWrapper.clientHeight}`
         }
     })
+
+    floorDataInput.addEventListener("keydown", function(e){
+        if (floorDataInput.value == '' || floorDataInput.value == null){
+            return;
+        }
+
+        if (e.key == "Enter"){
+            fetchData(floorDataInput.value);
+        }
+    })
+
 })

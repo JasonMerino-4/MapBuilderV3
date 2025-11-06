@@ -14,32 +14,62 @@
 <body>
     <main>
         <div id="editor_bar">
-            <input id="mapwidth_input" type="number" placeholder="map width">
-            <input id="pinfloor_input" type="number" placeholder="floor">
-            <input id="pinname_input" type="text" placeholder="pin name">
-            <select name="pin types" id="pintype_input">
-                <option value="Classroom" selected>Classroom</option>
-                <option value="Bathroom">Bathroom</option>
-                <option value="Study Room">Study Room</option>
-                <option value="Entrance">Entrance</option>
-                <option value="Stairs">Stairs</option>
-                <option value="Elevators">Elevators</option>
-                <option value="Path">Path</option>
-            </select>
-            <button id="newpin_button">
-                +
-            </button>
+            <div id="pin_wrapper">
+                <label for="map width">Map Width</label>
+                <input name="map width" id="mapwidth_input" type="number" placeholder="map width">
+                <label for="pin floor">Pin Floor</label>
+                <input name="pin floor" id="pinfloor_input" type="number" placeholder="floor">
+                <label for="pin name">Pin Name</label>
+                <input name="pin name" id="pinname_input" type="text" placeholder="pin name">
+                <label for="pin types">Pin Type</label>
+                <select name="pin types" id="pintype_input">
+                    <option value="Classroom" selected>Classroom</option>
+                    <option value="Bathroom">Bathroom</option>
+                    <option value="Study Room">Study Room</option>
+                    <option value="Entrance">Entrance</option>
+                    <option value="Hallway">Hallway</option>
+                    <option value="Room">Room</option>
+                    <option value="Stairs">Stairs</option>
+                    <option value="Elevators">Elevators</option>
+                    <option value="Path">Path</option>
+                </select>
+                <button id="newpin_button">Add</button>
+                <button id="deletepin_button">Delete</button>
+            </div>
+            <div id="edge_wrapper">
+                <label for="edge_on_input">Edge On</label>
+                <input name="edge on" type="checkbox" id="edge_on_input">
+                <label for="selecting_parent_input">Selecting Parent</label>
+                <input name="selecting parent" type="checkbox" id="selecting_parent_input">
+                <label for="edge_trail_input">Edge Trail</label>
+                <input name="edge trail" type="checkbox" id="edge_trail_input">
+                <label for="current edges">Current Edges</label>
+                <select name="current edges" id="current_edges_select">
+
+                </select>
+                <button id="delete_current_edge_button">Delete</button>
+                <label for="new edges">New Edges</label>
+                <select name="new edges" id="new_edges_select">
+
+                </select>
+                <button id="add_all_new_edge_button">Add All</button>
+                <button id="delete_new_edge_button">Delete</button>
+            </div>
+            <button id="print_button">print</button>
             <div id="info_wrapper">
-                <p id="imgdimension_info" class="info_data">|Img Dimensions|</p>
-                <p id="pincoord_info" class="info_data">|Pin Coords|</p>
-                <p id="pintype_info" class="info_data">|Pin Type|</p>
                 <p id="pinname_info" class="info_data">|Pin Name|</p>
+                <p id="pintype_info" class="info_data">|Pin Type|</p>
+                <p id="pincoord_info" class="info_data">|Pin Coords|</p>
+                <p id="imgdimension_info" class="info_data">|Img Dimensions|</p>
             </div>
         </div>
-        <div id="map_wrapper">
-            <svg id="map_paths">
-            </svg>
-            <img id="map_floorplan" src="Floorplans/floor1.svg">
+        <div id="map_and_console_wrapper">
+            <div id="map_wrapper">
+                <svg id="map_paths"></svg>
+                <img id="map_floorplan" src="Floorplans/floor1.svg">
+            </div>
+            <input type="text" placeholder="Floordata file path .\" id="floordata_input">
+            <textarea id="console"></textarea>
         </div>
     </main>
 </body>
