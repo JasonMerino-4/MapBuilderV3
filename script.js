@@ -152,6 +152,8 @@ document.addEventListener("DOMContentLoaded", function () {
             this.pinMap.forEach((pinObj, name) => {
                 this.removePin(pinObj);
             })
+
+            clearMapPaths();
         },
 
         removePin: function (pin) {
